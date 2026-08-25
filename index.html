@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="tr" id="root-html" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kampanya Kazanım Sorgulama (Konsept Simülasyonu)</title>
+  
+  <!-- Tailwind CSS & Geist Font -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide İkon Kütüphanesi -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Geist"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              emerald: '#10b981',
+              dark: '#09090b',
+              surface: '#121215',
+              card: '#18181b',
+              border: 'rgba(255, 255, 255, 0.08)'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .view-layer {
+      display: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .view-layer.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Toast Ortalanmış Konum ve Animasyon */
+    #app-toast {
+      transform: translateY(40px) scale(0.95);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    }
+    #app-toast.show {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body class="bg-zinc-100 dark:bg-black text-zinc-900 dark:text-zinc-100 font-sans antialiased min-h-screen flex justify-center selection:bg-emerald-500 selection:text-black transition-colors duration-200">
+
+  <!-- Mobil Gövde -->
+  <main class="w-full max-w-md min-h-screen bg-white dark:bg-zinc-950 flex flex-col justify-between relative overflow-hidden border-x border-zinc-200 dark:border-zinc-900 shadow-2xl">
+    
+    <!-- Üst Bar -->
+    <header class="px-6 pt-7 pb-3.5 flex justify-between items-center bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-900 z-20">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center border border-zinc-700/50 shadow-xs">
+          <i data-lucide="badge-check" class="w-4 h-4 text-emerald-400"></i>
+        </div>
+        <div>
+          <span class="text-[9px] font-mono tracking-widest text-emerald-600 dark:text-emerald-400 uppercase font-semibold">KAMPANYA KAZANIM</span>
+          <h1 class="text-xs font-semibold text-zinc-900 dark:text-white tracking-tight">Kampanya Kazanım Sorgulama</h1>
+        </div>
+      </div>
+      
+      <button onclick="switchTab('profile')" class="flex items-center gap-2 focus:outline-none">
+        <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-800 dark:text-zinc-200 font-mono text-xs hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors">
+          DY
+        </div>
+      </button>
+    </header>
+
+    <!-- Dinamik Ekran Alanı -->
+    <div class="flex-1 px-5 py-4 overflow-y-auto no-scrollbar z-10">
+
+      <!-- ========================================================= -->
+      <!-- 1. EKRAN: CÜZDAN & DOKUNMATİK KAYDIRILABİLİR KARTLAR -->
+      <!-- ========================================================= -->
+      <section id="layer-home" class="view-layer active">
+        
+        <!-- Yasal Sorumluluk Beyanı -->
+        <div class="bg-zinc-100 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 mb-4 flex items-start gap-2.5 shadow-xs">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0 mt-0.5"></i>
+          <p class="text-[11px] text-zinc-600 dark:text-zinc-400 leading-snug">
+            <b>Yasal Bilgilendirme:</b> Bu portal bir yazılım simülasyonudur. Arayüzde yer alan tüm kart bilgileri, harcama tutarları, limitler ve kişi isimleri <b>tamamen hayal ürünüdür ve gerçeklik taşımaz.</b>
+          </p>
+        </div>
+
+        <!-- HIZLI TEST SENARYOLARI -->
+        <div class="mb-4">
+          <span class="text-[9px] font-mono font-bold text-zinc-500 uppercase tracking-wider block mb-1.5">
+            Test Senaryoları (Hızlı İnceleme)
+          </span>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button onclick="runPresetScenario('success')" class="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col items-center gap-1 text-center transition-all active:scale-95">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span class="text-[9px] font-semibold text-zinc-800 dark:text-zinc-200 leading-tight">Tam Kazanım</span>
+            </button>
+            <button onclick="runPresetScenario('already_credited')" class="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col items-center gap-1 text-center transition-all active:scale-95">
+              <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
+              <span class="text-[9px] font-semibold text-zinc-800 dark:text-zinc-200 leading-tight">Yansıtıldı</span>
+            </button>
+            <button onclick="runPresetScenario('pending')" class="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col items-center gap-1 text-center transition-all active:scale-95">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span class="text-[9px] font-semibold text-zinc-800 dark:text-zinc-200 leading-tight">Provizyon</span>
+            </button>
+            <button onclick="runPresetScenario('sector_mismatch')" class="p-2 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex flex-col items-center gap-1 text-center transition-all active:scale-95">
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+              <span class="text-[9px] font-semibold text-zinc-800 dark:text-zinc-200 leading-tight">Sektör Farkı</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Limit Özeti -->
+        <div class="bg-zinc-50 dark:bg-zinc-900/30 rounded-2xl p-5 border border-zinc-200 dark:border-zinc-800/80 mb-5">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] font-mono tracking-wider uppercase text-zinc-500 dark:text-zinc-400">Simüle Edilen Portföy Limiti</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">4 Profil Tanımlı</span>
+          </div>
+          <div class="text-2xl font-bold text-zinc-900 dark:text-white font-mono tracking-tight mt-1.5">324.500,00 TL</div>
+        </div>
+
+        <!-- Kartlar Başlığı -->
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Kayıtlı Kartlarım</span>
+          <span class="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono flex items-center gap-1">
+            <i data-lucide="hand" class="w-3 h-3"></i> Detay İçin Dokunun
+          </span>
+        </div>
+
+        <!-- YATAY SAĞA-SOLA KAYDIRMALI CAROUSEL -->
+        <div class="flex gap-3.5 overflow-x-auto no-scrollbar snap-x snap-mandatory py-2 -mx-5 px-5 mb-5">
+          
+          <!-- Platinum Kart -->
+          <div onclick="openCardViewScreen('PLATIN')" class="min-w-[275px] h-44 rounded-2xl p-5 bg-gradient-to-br from-zinc-900 to-zinc-800 text-white relative overflow-hidden flex flex-col justify-between snap-center shadow-md cursor-pointer hover:border-zinc-500 active:scale-95 transition-all border border-zinc-700/60">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[9px] tracking-widest text-zinc-400 font-mono">SIMÜLE HESAP</span>
+                <div class="text-sm font-semibold tracking-wide">Platinum Metal Kart</div>
+              </div>
+              <i data-lucide="shield" class="w-4 h-4 text-zinc-400"></i>
+            </div>
+            <div>
+              <div class="text-base font-mono tracking-widest mb-1">•••• 2345</div>
+              <div class="flex justify-between text-[11px] text-zinc-400 font-mono">
+                <span class="text-zinc-200 font-sans font-medium">DENİZ YILMAZ</span>
+                <span>Limit: 90.000 TL</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Black Kart -->
+          <div onclick="openCardViewScreen('BLACK')" class="min-w-[275px] h-44 rounded-2xl p-5 bg-gradient-to-br from-black to-zinc-900 text-white border border-zinc-800 relative overflow-hidden flex flex-col justify-between snap-center shadow-md cursor-pointer hover:border-zinc-500 active:scale-95 transition-all">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[9px] tracking-widest text-zinc-500 font-mono">SIMÜLE HESAP</span>
+                <div class="text-sm font-semibold tracking-wide text-zinc-100">Black Infinite Kart</div>
+              </div>
+              <i data-lucide="gem" class="w-4 h-4 text-zinc-400"></i>
+            </div>
+            <div>
+              <div class="text-base font-mono tracking-widest mb-1">•••• 9012</div>
+              <div class="flex justify-between text-[11px] text-zinc-400 font-mono">
+                <span class="text-zinc-200 font-sans font-medium">DENİZ YILMAZ</span>
+                <span>Limit: 150.000 TL</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Green Kart -->
+          <div onclick="openCardViewScreen('GREEN')" class="min-w-[275px] h-44 rounded-2xl p-5 bg-gradient-to-br from-zinc-900 via-zinc-850 to-emerald-950 text-white relative overflow-hidden flex flex-col justify-between snap-center shadow-md cursor-pointer hover:border-zinc-500 active:scale-95 transition-all border border-zinc-800">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[9px] tracking-widest text-emerald-400/70 font-mono">SIMÜLE HESAP</span>
+                <div class="text-sm font-semibold tracking-wide text-zinc-100">Green Banka Kartı</div>
+              </div>
+              <i data-lucide="leaf" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div>
+              <div class="text-base font-mono tracking-widest mb-1">•••• 1098</div>
+              <div class="flex justify-between text-[11px] text-zinc-400 font-mono">
+                <span class="text-zinc-200 font-sans font-medium">DENİZ YILMAZ</span>
+                <span>Bakiye: 24.500 TL</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gold Kart -->
+          <div onclick="openCardViewScreen('GOLD')" class="min-w-[275px] h-44 rounded-2xl p-5 bg-gradient-to-br from-zinc-900 to-amber-950/70 text-white relative overflow-hidden flex flex-col justify-between snap-center shadow-md cursor-pointer hover:border-zinc-500 active:scale-95 transition-all border border-zinc-800">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[9px] tracking-widest text-amber-400/70 font-mono">SIMÜLE HESAP</span>
+                <div class="text-sm font-semibold tracking-wide text-zinc-100">Gold Prestij Kart</div>
+              </div>
+              <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div>
+              <div class="text-base font-mono tracking-widest mb-1">•••• 0987</div>
+              <div class="flex justify-between text-[11px] text-zinc-400 font-mono">
+                <span class="text-zinc-200 font-sans font-medium">DENİZ YILMAZ</span>
+                <span>Limit: 60.000 TL</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Kampanya Kazanım Sorgulama Kutusu -->
+        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-white mb-5 flex items-center justify-between shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <i data-lucide="search-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <span class="text-[9px] font-mono font-bold tracking-widest text-emerald-400 uppercase">KAMPANYA KAZANIM SORGULAMA</span>
+              <h3 class="text-xs font-semibold text-white mt-0.5">Kazanım Durumu Sorgula</h3>
+              <p class="text-[11px] text-zinc-400 mt-0.5">Harcamanızı 3 adımda parametrelerle denetleyin.</p>
+            </div>
+          </div>
+          <button onclick="startAuditFlow()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-zinc-900 font-semibold text-xs shadow-xs active:scale-95 transition-all shrink-0 ml-2">
+            Sorgula ➔
+          </button>
+        </div>
+
+        <!-- Son İşlemler -->
+        <div class="flex justify-between items-center mb-2.5">
+          <h3 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Son Hesap Hareketleri</h3>
+        </div>
+        <div id="general-feed-list" class="space-y-2 mb-6"></div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- AYRI PENCERE: KART HARCAMA & PROVİZYON DÖKÜM EKRANI -->
+      <!-- ========================================================= -->
+      <section id="layer-card-detail-view" class="view-layer">
+        <div class="flex items-center gap-2 mb-4">
+          <button onclick="switchLayer('home')" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <div>
+            <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-bold">KART HAREKETLERİ</span>
+            <h2 id="card-view-header-title" class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Harcama Dökümü</h2>
+          </div>
+        </div>
+
+        <div id="card-view-mini-card" class="rounded-2xl p-5 text-white mb-5 shadow-md border border-zinc-800"></div>
+
+        <!-- Bekleyen / Provizyondaki İşlemler -->
+        <div class="mb-4">
+          <div class="flex items-center gap-1.5 mb-2.5">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-500"></i>
+            <h3 class="text-xs font-semibold text-zinc-800 dark:text-zinc-300 uppercase tracking-wider">Provizyondaki İşlemler (Bekleyen)</h3>
+          </div>
+          <div id="card-view-pending-tx-list" class="space-y-2"></div>
+        </div>
+
+        <!-- Kesinleşmiş Dönem İçi İşlemler -->
+        <div>
+          <div class="flex justify-between items-center mb-2.5">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
+              <h3 class="text-xs font-semibold text-zinc-800 dark:text-zinc-300 uppercase tracking-wider">Dönem İçi Harcamalar (Onaylanan)</h3>
+            </div>
+            <span id="card-view-tx-count" class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400"></span>
+          </div>
+          <div id="card-view-settled-tx-list" class="space-y-2 pb-6"></div>
+        </div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- 2. EKRAN: 8 AKTİF KAMPANYA LİSTESİ -->
+      <!-- ========================================================= -->
+      <section id="layer-campaigns-list" class="view-layer">
+        <div class="flex justify-between items-center mb-3">
+          <div>
+            <span class="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">AVANTAJ HAVUZU</span>
+            <h2 class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Aktif Kampanyalar</h2>
+          </div>
+          <span class="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-semibold px-2 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-800">8 Fırsat</span>
+        </div>
+
+        <div id="all-campaigns-container" class="space-y-2 pb-6"></div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- 3. EKRAN: KAMPANYA DETAY, ŞARTLAR, SAYAÇ VE KATIL BUTONU -->
+      <!-- ========================================================= -->
+      <section id="layer-campaign-detail" class="view-layer">
+        <div class="flex items-center gap-2 mb-4">
+          <button onclick="switchLayer('campaigns-list')" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <div>
+            <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-bold">PARAMETRE & ŞARTLAR</span>
+            <h2 class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Kampanya Koşulları</h2>
+          </div>
+        </div>
+
+        <div id="campaign-detail-content" class="space-y-3 pb-6"></div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- 4. DENETİM ADIMLARI (ADIM ADIM YENİ EKRANLAR) -->
+      <!-- ========================================================= -->
+      <section id="layer-audit-camp" class="view-layer">
+        <div class="flex items-center gap-2 mb-4">
+          <button onclick="switchLayer('home')" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <div>
+            <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-bold">1. ADIM / 3</span>
+            <h2 class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Kampanyayı Seçin</h2>
+          </div>
+        </div>
+
+        <div id="audit-campaign-cards-container" class="space-y-2 pb-6"></div>
+      </section>
+
+      <section id="layer-audit-card" class="view-layer">
+        <div class="flex items-center gap-2 mb-4">
+          <button onclick="switchLayer('audit-camp')" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <div>
+            <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-bold">2. ADIM / 3</span>
+            <h2 class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Kullandığınız Kartı Seçin</h2>
+          </div>
+        </div>
+
+        <div id="audit-card-selection-container" class="space-y-2 pb-6"></div>
+      </section>
+
+      <section id="layer-audit-tx" class="view-layer">
+        <div class="flex items-center gap-2 mb-4">
+          <button onclick="switchLayer('audit-card')" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <div>
+            <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-bold">3. ADIM / 3</span>
+            <h2 class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Harcama İşlemini Seçin</h2>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-zinc-500 mb-2">Provizyonda bekleyen veya onaylanmış işlemlerden birini seçebilirsiniz:</p>
+        <div id="audit-tx-selection-container" class="space-y-2 pb-6"></div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- 0.8 SN KURAL MOTORU ANALİZ SİMÜLASYONU EKRANI -->
+      <!-- ========================================================= -->
+      <section id="layer-audit-loading" class="view-layer text-center py-16">
+        <div class="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <i data-lucide="cpu" class="w-6 h-6 text-emerald-500 animate-spin"></i>
+        </div>
+        <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold block mb-1">KURAL MOTORU DEVREDE</span>
+        <h3 class="text-sm font-bold text-zinc-900 dark:text-white">Parametreler Taranıyor...</h3>
+        <p class="text-[11px] text-zinc-500 font-mono mt-1">MCC Kodu • Tutar • Kanal • Provizyon Kontrolü</p>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- KAZANIM SORGULAMA ANALİZ RAPORU -->
+      <!-- ========================================================= -->
+      <section id="layer-audit-result" class="view-layer">
+        <div class="flex items-center gap-2 mb-4">
+          <button onclick="handleAuditResultBack()" class="w-8 h-8 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          </button>
+          <div>
+            <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-bold">DENETİM SONUCU</span>
+            <h2 class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Kazanım Sorgulama Raporu</h2>
+          </div>
+        </div>
+
+        <div id="audit-result-display-box" class="rounded-2xl p-5 mb-5 border"></div>
+
+        <div class="space-y-2">
+          <div>
+            <button id="btn-submit-ticket" onclick="submitAuditTicket()" class="w-full py-3.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-xs tracking-wider uppercase flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i> İnceleme Talebini İlet
+            </button>
+            <span id="ticket-disclaimer-text" class="text-[9px] text-zinc-400 text-center block mt-1.5 font-mono">
+              * Bu talep simülasyon kaydı olup resmi bankacılık itirazı teşkil etmez.
+            </span>
+          </div>
+
+          <button onclick="switchLayer('home')" class="w-full py-3 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+            <i data-lucide="home" class="w-4 h-4"></i> Cüzdana Geri Dön
+          </button>
+        </div>
+      </section>
+
+      <!-- ========================================================= -->
+      <!-- 5. EKRAN: PROFİL & AYARLAR & TALEP TAKİBİ -->
+      <!-- ========================================================= -->
+      <section id="layer-profile" class="view-layer">
+        <div class="mb-4">
+          <span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-bold">HESAP YÖNETİMİ</span>
+          <h2 class="text-sm font-bold text-zinc-900 dark:text-white tracking-tight">Profil ve Tercihler</h2>
+        </div>
+
+        <div class="bg-zinc-50 dark:bg-zinc-900/40 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800/80 mb-4 flex items-center gap-3.5 shadow-xs">
+          <div class="w-11 h-11 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center font-mono font-bold text-sm border border-zinc-700/50">
+            DY
+          </div>
+          <div>
+            <h3 class="text-xs font-semibold text-zinc-900 dark:text-white">Deniz Yılmaz</h3>
+            <span class="text-[11px] text-zinc-500 font-mono">Simülasyon Oturumu</span>
+          </div>
+        </div>
+
+        <!-- İNCELEME TALEPLERİM MODÜLÜ -->
+        <div class="bg-zinc-50 dark:bg-zinc-900/40 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800/80 mb-4 shadow-xs">
+          <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div class="flex items-center gap-2">
+              <i data-lucide="inbox" class="w-4 h-4 text-emerald-500"></i>
+              <h4 class="text-xs font-bold text-zinc-900 dark:text-white">İnceleme Taleplerim</h4>
+            </div>
+            <span id="ticket-badge-count" class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">0 Talep</span>
+          </div>
+          <div id="profile-tickets-list" class="space-y-2">
+            <div class="text-[11px] text-zinc-400 italic p-1">Henüz iletilmiş bir inceleme talebiniz bulunmamaktadır.</div>
+          </div>
+        </div>
+
+        <div class="bg-zinc-50 dark:bg-zinc-900/40 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800/80 space-y-3 mb-4 shadow-xs">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center">
+                <i id="theme-icon" data-lucide="sun" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-medium text-zinc-900 dark:text-white">Karanlık Tema</h4>
+                <span class="text-[10px] text-zinc-500">Arayüz tonu</span>
+              </div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="theme-toggle-input" checked onchange="toggleThemeMode()" class="sr-only peer">
+              <div class="w-9 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800 cursor-pointer" onclick="openLegalModal('privacy')">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center">
+                <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-medium text-zinc-900 dark:text-white">Gizlilik & KVKK Bildirimi</h4>
+                <span class="text-[10px] text-zinc-500">Sıfır veri toplama ilkeleri</span>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400"></i>
+          </div>
+
+          <div class="flex items-center justify-between cursor-pointer" onclick="openLegalModal('terms')">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-medium text-zinc-900 dark:text-white">Kullanım Şartları & Lisans</h4>
+                <span class="text-[10px] text-zinc-500">Sorumluluk reddi ve açık haklar</span>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400"></i>
+          </div>
+
+        </div>
+
+        <!-- SİMÜLASYON VERİLERİNİ SIFIRLA BUTONU -->
+        <button onclick="resetSimulationData()" class="w-full py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-rose-500/10 hover:text-rose-500 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-mono font-medium transition-all active:scale-95 mb-4 flex items-center justify-center gap-2">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Simülasyon Verilerini Sıfırla
+        </button>
+
+        <div class="text-center text-[10px] font-mono text-zinc-500 space-y-0.5 mb-4">
+          <p>© 2026 Kampanya Kazanım Sorgulama Mimarisi</p>
+          <p>MIT Açık Kaynak Lisansı • Konsept Proje</p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- MODAL: YASAL METİNLER & DISCLAIMER -->
+    <div id="modal-legal" class="fixed inset-0 bg-black/80 backdrop-blur-xs z-50 hidden flex-col justify-end">
+      <div class="w-full max-w-md mx-auto bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-t-3xl p-5 max-h-[85vh] flex flex-col justify-between shadow-2xl">
+        <div>
+          <div class="flex justify-between items-center mb-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div>
+              <span class="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">HUKUKİ BİLGİLENDİRME</span>
+              <h3 id="modal-legal-title" class="text-xs font-bold text-zinc-900 dark:text-white">Kullanım Şartları</h3>
+            </div>
+            <button onclick="closeLegalModal()" class="w-7 h-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-500">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <div id="modal-legal-body" class="space-y-2.5 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed overflow-y-auto max-h-[48vh] no-scrollbar pr-1"></div>
+        </div>
+
+        <button onclick="closeLegalModal()" class="w-full mt-3.5 py-3 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-semibold hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all">
+          Anladım ve Kapat
+        </button>
+      </div>
+    </div>
+
+    <!-- ALT TOAST BİLDİRİMİ -->
+    <div id="app-toast" class="fixed inset-x-0 bottom-24 mx-auto w-[90%] max-w-sm bg-zinc-900 text-white border border-zinc-700/80 rounded-2xl p-4 shadow-2xl z-50 flex items-center justify-between opacity-0 pointer-events-none">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+          <i data-lucide="check" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h5 class="text-xs font-bold">İnceleme Talebi Kaydedildi</h5>
+          <span id="toast-ref" class="text-[10px] font-mono text-zinc-400">Ref: #DY-9042</span>
+        </div>
+      </div>
+      <button onclick="copyRefCode()" class="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-[10px] font-mono text-zinc-300 border border-zinc-700 transition-all active:scale-95 shrink-0">
+        Kopyala
+      </button>
+    </div>
+
+    <!-- Alt Navigasyon Barı -->
+    <nav class="border-t border-zinc-200 dark:border-zinc-800 px-6 py-2.5 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md flex justify-between items-center z-20">
+      <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+        <i data-lucide="wallet" class="w-4 h-4"></i>
+        <span class="text-[9px]">Cüzdan</span>
+      </button>
+
+      <button onclick="switchTab('campaigns-list')" id="nav-campaigns" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 font-medium">
+        <i data-lucide="badge-percent" class="w-4 h-4"></i>
+        <span class="text-[9px]">Kampanyalar</span>
+      </button>
+
+      <button onclick="startAuditFlow()" id="nav-audit" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 font-medium">
+        <div class="w-6 h-6 -mt-1 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        </div>
+        <span class="text-[9px]">Sorgula</span>
+      </button>
+
+      <button onclick="switchTab('profile')" id="nav-profile" class="flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 font-medium">
+        <i data-lucide="user-cog" class="w-4 h-4"></i>
+        <span class="text-[9px]">Profil</span>
+      </button>
+    </nav>
+
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- JAVASCRIPT MOTORU VE GELİŞMİŞ PARAMETRELER -->
+  <!-- ========================================================= -->
+  <script>
+    lucide.createIcons();
+
+    function toggleThemeMode() {
+      const htmlEl = document.getElementById('root-html');
+      const checkbox = document.getElementById('theme-toggle-input');
+      const icon = document.getElementById('theme-icon');
+
+      if (checkbox.checked) {
+        htmlEl.classList.add('dark');
+        icon.setAttribute('data-lucide', 'sun');
+      } else {
+        htmlEl.classList.remove('dark');
+        icon.setAttribute('data-lucide', 'moon');
+      }
+      lucide.createIcons();
+    }
+
+    const LEGAL_TEXTS = {
+      privacy: {
+        title: "Gizlilik & KVKK Bildirimi",
+        content: `
+          <p><b>1. Simülasyon Kapsamı:</b> Bu uygulama deneysel bir kural motoru arayüzüdür. Kullanıcılardan hiçbir gerçek kimlik bilgisi, gerçek kart numarası, şifre veya finansal kayıt toplanmamakta, işlenmemekte ve sunuculara iletilmemektedir.</p>
+          <p><b>2. Veri Güvenliği:</b> Tüm hesap hareketleri ve bakiye dökümleri yerel tarayıcı belleğinde statik olarak çalıştırılır. Ticari çerez veya takip kodu bulunmaz.</p>
+        `
+      },
+      terms: {
+        title: "Kullanım Şartları & Lisans (Disclaimer)",
+        content: `
+          <p><b>1. Hizmet Niteliği:</b> Bu portal, bankacılık sadakat programlarındaki kural doğrulama mantığını göstermek amacıyla oluşturulmuş açık kaynaklı bir konsept çalışmasıdır. Gerçek bir bankacılık veya ödeme aracılığı faaliyeti sunmaz.</p>
+          <p><b>2. Lisans & Sorumluluk:</b> Yazılım MIT Lisansı kapsamında sunulmuş olup, arayüzdeki tüm oranlar ve sonuçlar bağlayıcılığı olmayan simülasyon verileridir.</p>
+        `
+      }
+    };
+
+    function openLegalModal(type) {
+      const data = LEGAL_TEXTS[type];
+      document.getElementById('modal-legal-title').innerText = data.title;
+      document.getElementById('modal-legal-body').innerHTML = data.content;
+      document.getElementById('modal-legal').classList.remove('hidden');
+      document.getElementById('modal-legal').classList.add('flex');
+    }
+
+    function closeLegalModal() {
+      document.getElementById('modal-legal').classList.add('hidden');
+      document.getElementById('modal-legal').classList.remove('flex');
+    }
+
+    function showToast(refCode) {
+      const toast = document.getElementById('app-toast');
+      document.getElementById('toast-ref').innerText = `Ref: ${refCode}`;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+
+    function copyRefCode() {
+      const code = document.getElementById('toast-ref').innerText.replace('Ref: ', '');
+      navigator.clipboard.writeText(code);
+      alert(`Kopyalandı: ${code}`);
+    }
+
+    // 1. ZENGİNLEŞTİRİLMİŞ HARCAMA VERİTABANI
+    const FINANCIAL_DATA = {
+      PLATIN: {
+        name: "Platinum Metal Kart",
+        num: "•••• 2345",
+        holder: "DENİZ YILMAZ",
+        limit: "90.000 TL",
+        gradient: "from-zinc-900 to-zinc-800",
+        txs: [
+          { id: 'p_rew1', title: 'Ağustos Market Kampanya Puanı', date: '16 Ağu, 10:00', sector: 'Kazanım Ödülü', amount: 150, icon: 'gift', usedInCampaign: false, isPending: false, isCredit: true },
+          { id: 'p_pend1', title: 'Zincir Market Online Sipariş', date: 'Bugün, 21:15', sector: 'Market', amount: 620, icon: 'shopping-cart', usedInCampaign: false, isPending: true, mcc: '5411', channel: 'Online', isInstallment: false },
+          { id: 'p_settled_rewarded', title: 'Metro Grossmarket Alışverişi', date: '14 Ağu, 19:30', sector: 'Market', amount: 950, icon: 'shopping-cart', usedInCampaign: true, isPending: false, mcc: '5411', channel: 'Fiziki', isInstallment: false, rewardCredited: true, rewardCreditDate: '16 Ağustos 2026', rewardCreditNote: '150 TL Değerinde Puan' },
+          { id: 'p1', title: 'Hipermarket Gıda Alışverişi', date: '15 Ağu, 18:40', sector: 'Market', amount: 850, icon: 'shopping-cart', usedInCampaign: false, isPending: false, mcc: '5411', channel: 'Fiziki', isInstallment: false },
+          { id: 'p2', title: 'Giyim & Moda Mağazası', date: '13 Ağu, 16:15', sector: 'Giyim', amount: 1450, icon: 'shirt', usedInCampaign: false, isPending: false, mcc: '5651', channel: 'Fiziki', isInstallment: true },
+          { id: 'p3', title: 'Akaryakıt Dolum İstasyonu', date: '11 Ağu, 09:20', sector: 'Akaryakıt', amount: 920, icon: 'fuel', usedInCampaign: false, isPending: false, mcc: '5541', channel: 'Fiziki', isInstallment: false }
+        ]
+      },
+      BLACK: {
+        name: "Black Infinite Kart",
+        num: "•••• 9012",
+        holder: "DENİZ YILMAZ",
+        limit: "150.000 TL",
+        gradient: "from-black to-zinc-900",
+        txs: [
+          { id: 'b_pend1', title: 'Otoyol Yakıt Alımı', date: 'Bugün, 19:40', sector: 'Akaryakıt', amount: 1400, icon: 'fuel', usedInCampaign: false, isPending: true, mcc: '5541', channel: 'Fiziki', isInstallment: false },
+          { id: 'b1', title: 'Otoyol Yakıt İstasyonu', date: '16 Ağu, 08:30', sector: 'Akaryakıt', amount: 1250, icon: 'fuel', usedInCampaign: false, isPending: false, mcc: '5541', channel: 'Fiziki', isInstallment: false },
+          { id: 'b2', title: 'Yetkili Teknoloji Satıcısı', date: '14 Ağu, 15:45', sector: 'Teknoloji', amount: 18500, icon: 'smartphone', usedInCampaign: false, isPending: false, mcc: '5732', channel: 'Fiziki', isInstallment: false },
+          { id: 'b3', title: 'Uçak Bileti Online Rezervasyon', date: '06 Ağu, 10:25', sector: 'Seyahat', amount: 6800, icon: 'plane', usedInCampaign: false, isPending: false, mcc: '3000', channel: 'Online', isInstallment: false }
+        ]
+      },
+      GREEN: {
+        name: "Green Banka Kartı",
+        num: "•••• 1098",
+        holder: "DENİZ YILMAZ",
+        limit: "24.500 TL (Bakiye)",
+        gradient: "from-zinc-900 to-emerald-950",
+        txs: [
+          { id: 'g_pend1', title: 'Gurme Kafe & Kahve', date: 'Bugün, 20:10', sector: 'Restoran', amount: 185, icon: 'coffee', usedInCampaign: false, isPending: true, mcc: '5812', channel: 'Fiziki', isInstallment: false },
+          { id: 'g1', title: 'Restoran & Bistro Hesabı', date: '15 Ağu, 21:00', sector: 'Restoran', amount: 680, icon: 'utensils', usedInCampaign: false, isPending: false, mcc: '5812', channel: 'Fiziki', isInstallment: false },
+          { id: 'g2', title: 'Mahalle Perakende Marketi', date: '12 Ağu, 12:15', sector: 'Market', amount: 210, icon: 'shopping-bag', usedInCampaign: false, isPending: false, mcc: '5411', channel: 'Fiziki', isInstallment: false }
+        ]
+      },
+      GOLD: {
+        name: "Gold Prestij Kart",
+        num: "•••• 0987",
+        holder: "DENİZ YILMAZ",
+        limit: "60.000 TL",
+        gradient: "from-zinc-900 to-amber-950",
+        txs: [
+          { id: 'o_pend1', title: 'Ayakkabı & Deri Aksesuar', date: 'Bugün, 17:20', sector: 'Giyim', amount: 1150, icon: 'shirt', usedInCampaign: false, isPending: true, mcc: '5651', channel: 'Fiziki', isInstallment: false },
+          { id: 'o1', title: 'Zincir Giyim Mağazası', date: '14 Ağu, 16:30', sector: 'Giyim', amount: 1300, icon: 'shirt', usedInCampaign: false, isPending: false, mcc: '5651', channel: 'Fiziki', isInstallment: false },
+          { id: 'o2', title: 'Spor Giyim Online Alışveriş', date: '11 Ağu, 14:10', sector: 'Giyim', amount: 890, icon: 'shirt', usedInCampaign: false, isPending: false, mcc: '5651', channel: 'Online', isInstallment: false }
+        ]
+      }
+    };
+
+    // 2. KAMPANYALAR
+    const CAMPAIGN_DATABASE = [
+      {
+        id: 'camp_market',
+        title: '500 TL ve Üzeri Market Harcamasına 150 TL Puan',
+        sector: 'Market',
+        minAmount: 500,
+        validCards: ['PLATIN', 'BLACK'],
+        badge: 'Gıda & Market',
+        startDate: '01 Ağustos 2026',
+        endDate: '31 Ağustos 2026',
+        reward: '150 TL Değerinde Puan',
+        requireOptIn: false,
+        isJoined: true,
+        progress: { current: 2, total: 3, label: '3 adet 500 TL harcamaya özel' },
+        rules: {
+          allowedMCC: ['5411'],
+          channel: 'ALL',
+          singlePaymentOnly: true
+        },
+        terms: [
+          'Tek seferde yapılacak 500 TL ve üzeri kesinleşmiş market harcamalarında geçerlidir.',
+          'Yalnızca Platinum Metal ve Black Infinite kartları dahil edilir.',
+          'Yalnızca tek çekim işlemler geçerlidir; taksitli işlemler dahil edilmez.',
+          '3 adet harcama hedefine ulaşıldığında puan yüklenir.'
+        ]
+      },
+      {
+        id: 'camp_fuel',
+        title: 'Akaryakıt Harcamalarına Anında %12 Cashback',
+        sector: 'Akaryakıt',
+        minAmount: 600,
+        validCards: ['BLACK', 'PLATIN'],
+        badge: 'Akaryakıt & Yakıt',
+        startDate: '05 Ağustos 2026',
+        endDate: '25 Ağustos 2026',
+        reward: 'Anında %12 Nakit İade',
+        requireOptIn: true,
+        isJoined: false,
+        rules: {
+          allowedMCC: ['5541', '5542'],
+          channel: 'Fiziki',
+          singlePaymentOnly: true
+        },
+        terms: [
+          'Kampanyadan yararlanmak için harcama öncesinde <b>"Kampanyaya Katıl"</b> butonuna basılmalıdır.',
+          'Minimum işlem tutarı tek seferde 600 TL olmalıdır.',
+          'Yalnızca istasyon içi fiziki POS cihazlarından yapılan ödemelerde geçerlidir.',
+          'Black Infinite ve Platinum Metal kartları için geçerlidir.'
+        ]
+      },
+      {
+        id: 'camp_giyim',
+        title: '1.000 TL Üzeri Giyim Alışverişine 250 TL Kupon',
+        sector: 'Giyim',
+        minAmount: 1000,
+        validCards: ['PLATIN', 'GOLD'],
+        badge: 'Moda & Giyim',
+        startDate: '10 Ağustos 2026',
+        endDate: '31 Ağustos 2026',
+        reward: '250 TL İndirim Kuponu',
+        requireOptIn: true,
+        isJoined: true,
+        rules: {
+          allowedMCC: ['5651', '5691'],
+          channel: 'ALL',
+          singlePaymentOnly: true
+        },
+        terms: [
+          'Kampanyaya katılım sağlandıktan sonra yapılan 1.000 TL ve üzeri işlemlerde geçerlidir.',
+          'Taksitli harcamalar kampanyaya dahil değildir, yalnızca tek çekim işlemler geçerlidir.',
+          'Gold Prestij ve Platinum Metal kartları dahildir.'
+        ]
+      },
+      {
+        id: 'camp_tech',
+        title: '4.000 TL Üzeri E-Ticaret Teknoloji Harcamasına 500 TL İade',
+        sector: 'Teknoloji',
+        minAmount: 4000,
+        validCards: ['BLACK', 'PLATIN'],
+        badge: 'Elektronik & Online',
+        startDate: '15 Ağustos 2026',
+        endDate: '30 Eylül 2026',
+        reward: '500 TL Hesap İadesi',
+        requireOptIn: true,
+        isJoined: false,
+        rules: {
+          allowedMCC: ['5732'],
+          channel: 'Online',
+          singlePaymentOnly: false
+        },
+        terms: [
+          'Önceden kampanyaya katılım onayı verilmiş olmalıdır.',
+          'Yalnızca online / e-ticaret sitelerinden yapılan 4.000 TL ve üzeri alımlarda geçerlidir.',
+          'Fiziki mağaza POS işlemleri bu kampanyaya dahil edilmez.',
+          'Black Infinite ve Platinum Metal kartları için geçerlidir.'
+        ]
+      },
+      {
+        id: 'camp_travel',
+        title: '5.000 TL Üzeri Ulaşım & Konaklamaya 750 Mil Puan',
+        sector: 'Seyahat',
+        minAmount: 5000,
+        validCards: ['BLACK'],
+        badge: 'Seyahat & Ulaşım',
+        startDate: '01 Ağustos 2026',
+        endDate: '15 Eylül 2026',
+        reward: '750 Bonus Ulaşım Mili',
+        requireOptIn: false,
+        isJoined: true,
+        rules: {
+          allowedMCC: ['3000', '7011'],
+          channel: 'ALL',
+          singlePaymentOnly: false
+        },
+        terms: [
+          'Yalnızca Black Infinite kart sahipleri yararlanabilir.',
+          'Tek seferde 5.000 TL ve üzeri kesinleşmiş harcama gereklidir.'
+        ]
+      },
+      {
+        id: 'camp_rest',
+        title: 'Restoran ve Kafe Harcamalarına 100 TL İndirim',
+        sector: 'Restoran',
+        minAmount: 300,
+        validCards: ['GREEN'],
+        badge: 'Yeme & İçme',
+        startDate: '01 Ağustos 2026',
+        endDate: '31 Ağustos 2026',
+        reward: '100 TL Anında İndirim',
+        requireOptIn: false,
+        isJoined: true,
+        rules: {
+          allowedMCC: ['5812'],
+          channel: 'ALL',
+          singlePaymentOnly: true
+        },
+        terms: [
+          'Green Banka Kartı ile yapılan 300 TL ve üzeri işlemlerde geçerlidir.'
+        ]
+      },
+      {
+        id: 'camp_home',
+        title: '2.500 TL Ev & Yaşam Alışverişine 300 TL Hediye',
+        sector: 'Ev/Dekorasyon',
+        minAmount: 2500,
+        validCards: ['PLATIN', 'GOLD'],
+        badge: 'Ev & Yaşam',
+        startDate: '01 Ağustos 2026',
+        endDate: '31 Ağustos 2026',
+        reward: '300 TL Değerinde Puan',
+        requireOptIn: true,
+        isJoined: false,
+        rules: {
+          allowedMCC: ['5712'],
+          channel: 'ALL',
+          singlePaymentOnly: false
+        },
+        terms: [
+          'Mobilya ve dekorasyon işlemlerinde geçerlidir.',
+          'Minimum harcama tutarı 2.500 TL olmalıdır.'
+        ]
+      },
+      {
+        id: 'camp_cosmetic',
+        title: '600 TL Kozmetik & Kişisel Bakıma 100 TL İade',
+        sector: 'Kozmetik',
+        minAmount: 600,
+        validCards: ['GOLD', 'GREEN'],
+        badge: 'Bakım & Kozmetik',
+        startDate: '05 Ağustos 2026',
+        endDate: '28 Ağustos 2026',
+        reward: '100 TL Nakit İade',
+        requireOptIn: false,
+        isJoined: true,
+        rules: {
+          allowedMCC: ['5977'],
+          channel: 'ALL',
+          singlePaymentOnly: true
+        },
+        terms: [
+          'Gold Prestij ve Green Banka Kartı için geçerlidir.',
+          'Tek seferde 600 TL üzeri kesinleşen harcamalar dahildir.'
+        ]
+      }
+    ];
+
+    // İnceleme Talepleri Dizisi (Profil için)
+    let submittedTickets = [];
+
+    let auditState = { campaign: null, cardKey: null, transaction: null, isPreset: false };
+
+    function switchLayer(layerId) {
+      document.querySelectorAll('.view-layer').forEach(l => l.classList.remove('active'));
+      const target = document.getElementById(`layer-${layerId}`);
+      if (target) target.classList.add('active');
+      lucide.createIcons();
+    }
+
+    function switchTab(tabId) {
+      switchLayer(tabId);
+      const tabs = ['home', 'campaigns-list', 'profile'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`nav-${t.replace('-list', '')}`);
+        if (btn) {
+          if (t === tabId || (t === 'campaigns-list' && tabId === 'campaigns-list')) {
+            btn.className = "flex flex-col items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold";
+          } else {
+            btn.className = "flex flex-col items-center gap-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 font-medium";
+          }
+        }
+      });
+
+      if (tabId === 'campaigns-list') {
+        loadAllCampaignsList();
+      }
+      if (tabId === 'profile') {
+        renderProfileTickets();
+      }
+    }
+
+    function toggleJoinCampaign(campId) {
+      const camp = CAMPAIGN_DATABASE.find(c => c.id === campId);
+      if (!camp) return;
+      
+      camp.isJoined = !camp.isJoined;
+      openCampaignDetail(campId);
+    }
+
+    function handleAuditResultBack() {
+      if (auditState.isPreset) {
+        switchLayer('home');
+      } else {
+        switchLayer('audit-tx');
+      }
+    }
+
+    // 4 FARKLI HAZIR DEMO SENARYOSU
+    function runPresetScenario(type) {
+      auditState.isPreset = true;
+
+      if (type === 'success') {
+        auditState.campaign = CAMPAIGN_DATABASE.find(c => c.id === 'camp_market');
+        auditState.cardKey = 'PLATIN';
+        selectAuditTransaction('p1');
+      } else if (type === 'already_credited') {
+        auditState.campaign = CAMPAIGN_DATABASE.find(c => c.id === 'camp_market');
+        auditState.cardKey = 'PLATIN';
+        selectAuditTransaction('p_settled_rewarded');
+      } else if (type === 'pending') {
+        auditState.campaign = CAMPAIGN_DATABASE.find(c => c.id === 'camp_market');
+        auditState.cardKey = 'PLATIN';
+        selectAuditTransaction('p_pend1');
+      } else if (type === 'sector_mismatch') {
+        auditState.campaign = CAMPAIGN_DATABASE.find(c => c.id === 'camp_market');
+        auditState.cardKey = 'PLATIN';
+        selectAuditTransaction('p3');
+      }
+    }
+
+    function openCardViewScreen(cardKey) {
+      const card = FINANCIAL_DATA[cardKey];
+      document.getElementById('card-view-header-title').innerText = card.name;
+      
+      const pendingTxs = card.txs.filter(t => t.isPending);
+      const settledTxs = card.txs.filter(t => !t.isPending);
+
+      document.getElementById('card-view-tx-count').innerText = `${settledTxs.length} Kesinleşen İşlem`;
+
+      document.getElementById('card-view-mini-card').className = `rounded-2xl p-5 bg-gradient-to-br ${card.gradient} text-white mb-5 shadow-md border border-zinc-800`;
+      document.getElementById('card-view-mini-card').innerHTML = `
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-[9px] tracking-widest text-zinc-400 font-mono">SIMÜLE HESAP</span>
+            <div class="text-sm font-semibold">${card.name}</div>
+          </div>
+          <i data-lucide="shield" class="w-4 h-4 text-zinc-400"></i>
+        </div>
+        <div class="mt-4">
+          <div class="text-base font-mono tracking-widest mb-1">${card.num}</div>
+          <div class="flex justify-between text-[11px] text-zinc-400 font-mono">
+            <span class="text-zinc-200 font-sans font-medium">${card.holder}</span>
+            <span>${card.limit}</span>
+          </div>
+        </div>
+      `;
+
+      const pendingContainer = document.getElementById('card-view-pending-tx-list');
+      if (pendingTxs.length > 0) {
+        pendingContainer.innerHTML = pendingTxs.map(tx => `
+          <div class="p-3.5 rounded-xl bg-amber-500/[0.04] dark:bg-amber-500/[0.06] border border-amber-500/20 flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                <i data-lucide="${tx.icon}" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h5 class="text-xs font-semibold text-zinc-900 dark:text-white">${tx.title}</h5>
+                  <span class="text-[9px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">PROVİZYONDA</span>
+                </div>
+                <span class="text-[10px] text-zinc-500 font-mono">${tx.date} • ${tx.sector}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-mono font-bold text-amber-600 dark:text-amber-400">${tx.amount.toLocaleString('tr-TR')} TL</div>
+              <span class="text-[9px] text-zinc-400">Onay Bekliyor</span>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        pendingContainer.innerHTML = `<div class="text-[11px] text-zinc-400 italic p-2">Bekleyen provizyon işlemi bulunmamaktadır.</div>`;
+      }
+
+      const settledContainer = document.getElementById('card-view-settled-tx-list');
+      settledContainer.innerHTML = settledTxs.map(tx => {
+        const isCredit = tx.isCredit;
+        return `
+          <div class="p-3.5 rounded-xl ${isCredit ? 'bg-emerald-500/[0.06] border border-emerald-500/20' : 'bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800/80'} flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg ${isCredit ? 'bg-emerald-500/15 text-emerald-500' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'} flex items-center justify-center">
+                <i data-lucide="${tx.icon}" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h5 class="text-xs font-medium text-zinc-900 dark:text-white">${tx.title}</h5>
+                  ${tx.isInstallment ? '<span class="text-[8px] font-mono font-semibold bg-zinc-200 dark:bg-zinc-800 px-1.5 py-0.2 rounded text-zinc-600 dark:text-zinc-300">TAKSİTLİ</span>' : ''}
+                  ${isCredit ? '<span class="text-[8px] font-mono font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded">KAZANIM İADESİ</span>' : ''}
+                </div>
+                <span class="text-[10px] text-zinc-500 font-mono">${tx.date} • <b class="text-zinc-700 dark:text-zinc-300 font-medium">${tx.sector}</b> ${tx.channel ? '(' + tx.channel + ')' : ''}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs font-mono font-bold ${isCredit ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-white'}">
+                ${isCredit ? '+' : ''}${tx.amount.toLocaleString('tr-TR')} TL
+              </div>
+              ${tx.rewardCredited ? '<span class="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">ÖDÜL YANSIDI</span>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      switchLayer('card-detail-view');
+      lucide.createIcons();
+    }
+
+    function loadAllCampaignsList() {
+      const container = document.getElementById('all-campaigns-container');
+      container.innerHTML = CAMPAIGN_DATABASE.map(camp => `
+        <div onclick="openCampaignDetail('${camp.id}')" class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-400 dark:hover:border-zinc-600 flex items-center justify-between cursor-pointer active:scale-95 transition-all group">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <i data-lucide="badge-percent" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">${camp.badge}</span>
+                ${camp.requireOptIn ? (camp.isJoined ? '<span class="text-[8px] font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.2 rounded font-bold">KATILDINIZ</span>' : '<span class="text-[8px] font-mono bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1.5 py-0.2 rounded font-bold">KATILIM GEREKLİ</span>') : ''}
+                <span class="text-[10px] text-zinc-400">• ${camp.endDate}</span>
+              </div>
+              <h4 class="text-xs font-medium text-zinc-900 dark:text-white mt-0.5 leading-snug">${camp.title}</h4>
+              <span class="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 block">Kazanım: <b class="text-zinc-900 dark:text-zinc-200 font-mono font-medium">${camp.reward}</b></span>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400"></i>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function openCampaignDetail(campId) {
+      const camp = CAMPAIGN_DATABASE.find(c => c.id === campId);
+      const container = document.getElementById('campaign-detail-content');
+
+      const validCardNames = camp.validCards.map(k => FINANCIAL_DATA[k].name).join(', ');
+      const termsList = camp.terms.map(t => `<li class="flex items-start gap-2 text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed"><span class="text-emerald-500 font-bold">•</span><span>${t}</span></li>`).join('');
+
+      let progressHtml = '';
+      if (camp.progress) {
+        const percent = (camp.progress.current / camp.progress.total) * 100;
+        progressHtml = `
+          <div class="bg-white dark:bg-zinc-950 p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 mt-3">
+            <div class="flex justify-between items-center text-xs mb-1.5">
+              <span class="font-semibold text-zinc-800 dark:text-zinc-200 font-mono">Hedef İlerlemesi</span>
+              <span class="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold px-2 py-0.5 rounded border border-emerald-500/20">+150 TL İçin Kalan: 1</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden mt-1">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: ${percent}%;"></div>
+            </div>
+            <span class="text-[10px] text-zinc-400 block mt-1.5 font-mono">${camp.progress.current} / ${camp.progress.total} Geçerli Harcama Tamamlandı</span>
+          </div>
+        `;
+      }
+
+      let optInBox = '';
+      if (camp.requireOptIn) {
+        optInBox = `
+          <div class="p-3 rounded-xl ${camp.isJoined ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-amber-500/10 border border-amber-500/20'} flex items-center justify-between mt-3">
+            <div>
+              <span class="text-[9px] font-mono font-bold ${camp.isJoined ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'} uppercase">KATILIM DURUMU</span>
+              <h5 class="text-xs font-semibold text-zinc-900 dark:text-white mt-0.5">${camp.isJoined ? 'Kampanyaya Katılım Sağlandı ✓' : 'Katılım Onayı Bekleniyor'}</h5>
+            </div>
+            <button onclick="toggleJoinCampaign('${camp.id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${camp.isJoined ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-emerald-600 hover:bg-emerald-500 text-white'} transition-all active:scale-95">
+              ${camp.isJoined ? 'Katıldınız ✓' : 'Hemen Katıl'}
+            </button>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="bg-zinc-50 dark:bg-zinc-900/30 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800/80">
+          <span class="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">${camp.badge}</span>
+          <h3 class="text-xs font-semibold text-zinc-900 dark:text-white mt-1">${camp.title}</h3>
+          
+          ${optInBox}
+          ${progressHtml}
+
+          <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-zinc-200/60 dark:border-zinc-800/60">
+            <div class="bg-white dark:bg-zinc-950 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
+              <span class="text-[9px] text-zinc-400 block font-mono">Kanal Şartı</span>
+              <span class="text-[11px] font-medium text-zinc-800 dark:text-zinc-200 font-mono mt-0.5 block">${camp.rules.channel === 'ALL' ? 'Online + Fiziki' : camp.rules.channel}</span>
+            </div>
+            <div class="bg-white dark:bg-zinc-950 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
+              <span class="text-[9px] text-zinc-400 block font-mono">Ödeme Türü</span>
+              <span class="text-[11px] font-medium text-zinc-800 dark:text-zinc-200 font-mono mt-0.5 block">${camp.rules.singlePaymentOnly ? 'Tek Çekim Zorunlu' : 'Taksit Geçerli'}</span>
+            </div>
+          </div>
+
+          <div class="mt-2 bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">
+            <span class="text-[9px] text-emerald-700 dark:text-emerald-400 block font-mono font-bold">Geçerli Kartlar</span>
+            <span class="text-[11px] text-zinc-900 dark:text-zinc-200 mt-0.5 block">${validCardNames}</span>
+          </div>
+        </div>
+
+        <div class="bg-zinc-50 dark:bg-zinc-900/30 rounded-2xl p-4 border border-zinc-200 dark:border-zinc-800/80">
+          <h4 class="text-xs font-medium text-zinc-900 dark:text-white uppercase tracking-wider mb-2">Kural Parametreleri</h4>
+          <ul class="space-y-1.5">
+            ${termsList}
+          </ul>
+        </div>
+
+        <button onclick="startAuditWithCampaign('${camp.id}')" class="w-full py-3 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-xs tracking-wider uppercase flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Bu Kampanyayı Denetle
+        </button>
+      `;
+
+      switchLayer('campaign-detail');
+      lucide.createIcons();
+    }
+
+    function startAuditWithCampaign(campId) {
+      selectAuditCampaign(campId);
+    }
+
+    function loadGeneralFeed() {
+      const feedContainer = document.getElementById('general-feed-list');
+      const sampleTxs = [
+        FINANCIAL_DATA.PLATIN.txs[0],
+        FINANCIAL_DATA.PLATIN.txs[1],
+        FINANCIAL_DATA.BLACK.txs[1]
+      ];
+
+      feedContainer.innerHTML = sampleTxs.map(tx => {
+        const isCredit = tx.isCredit;
+        return `
+          <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg ${isCredit ? 'bg-emerald-500/15 text-emerald-500' : (tx.isPending ? 'bg-amber-500/10 text-amber-500' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300')} flex items-center justify-center">
+                <i data-lucide="${tx.icon}" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <h5 class="text-xs font-medium text-zinc-800 dark:text-zinc-200">${tx.title}</h5>
+                  ${tx.isPending ? '<span class="text-[8px] font-mono font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1 py-0.2 rounded">PROVİZYONDA</span>' : ''}
+                  ${isCredit ? '<span class="text-[8px] font-mono font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1 py-0.2 rounded">KAZANIM</span>' : ''}
+                </div>
+                <span class="text-[10px] text-zinc-500 font-mono">${tx.date} • ${tx.sector}</span>
+              </div>
+            </div>
+            <span class="text-xs font-mono font-bold ${isCredit ? 'text-emerald-600 dark:text-emerald-400' : (tx.isPending ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-900 dark:text-white')}">
+              ${isCredit ? '+' : ''}${tx.amount.toLocaleString('tr-TR')} TL
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function startAuditFlow() {
+      auditState = { campaign: null, cardKey: null, transaction: null, isPreset: false };
+      const container = document.getElementById('audit-campaign-cards-container');
+
+      container.innerHTML = CAMPAIGN_DATABASE.map(camp => `
+        <div onclick="selectAuditCampaign('${camp.id}')" class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-400 dark:hover:border-zinc-600 flex items-center justify-between cursor-pointer active:scale-95 transition-all group">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <i data-lucide="badge-percent" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <span class="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase">${camp.badge}</span>
+              <h4 class="text-xs font-medium text-zinc-900 dark:text-white mt-0.5 leading-snug">${camp.title}</h4>
+              <span class="text-[10px] text-zinc-500 font-mono mt-0.5 block">Alt Limit: ${camp.minAmount} TL • Sektör: ${camp.sector}</span>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400"></i>
+        </div>
+      `).join('');
+
+      switchLayer('audit-camp');
+    }
+
+    function selectAuditCampaign(campId) {
+      auditState.campaign = CAMPAIGN_DATABASE.find(c => c.id === campId);
+      const container = document.getElementById('audit-card-selection-container');
+
+      container.innerHTML = Object.keys(FINANCIAL_DATA).map(key => {
+        const card = FINANCIAL_DATA[key];
+        return `
+          <div onclick="selectAuditCard('${key}')" class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800/80 hover:border-zinc-400 dark:hover:border-zinc-600 flex items-center justify-between cursor-pointer active:scale-95 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 flex items-center justify-center">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h4 class="text-xs font-medium text-zinc-900 dark:text-white">${card.name}</h4>
+                <span class="text-[10px] text-zinc-500 font-mono">${card.num} • DENİZ YILMAZ</span>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-zinc-400"></i>
+          </div>
+        `;
+      }).join('');
+
+      switchLayer('audit-card');
+    }
+
+    function selectAuditCard(cardKey) {
+      auditState.cardKey = cardKey;
+      const card = FINANCIAL_DATA[cardKey];
+      const container = document.getElementById('audit-tx-selection-container');
+
+      const spendTxs = card.txs.filter(t => !t.isCredit);
+
+      container.innerHTML = spendTxs.map(tx => `
+        <div onclick="selectAuditTransaction('${tx.id}')" class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/30 border ${tx.isPending ? 'border-amber-500/30' : 'border-zinc-200 dark:border-zinc-800/80'} hover:border-zinc-400 dark:hover:border-zinc-600 flex items-center justify-between cursor-pointer active:scale-95 transition-all">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg ${tx.isPending ? 'bg-amber-500/10 text-amber-500' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'} flex items-center justify-center">
+              <i data-lucide="${tx.icon}" class="w-3.5 h-3.5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h5 class="text-xs font-medium text-zinc-900 dark:text-white">${tx.title}</h5>
+                ${tx.isPending ? '<span class="text-[8px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 px-1 py-0.2 rounded">PROVİZYONDA</span>' : ''}
+              </div>
+              <span class="text-[10px] text-zinc-500 font-mono">${tx.date} • ${tx.sector} (${tx.channel}) • MCC: ${tx.mcc}</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs font-mono font-medium ${tx.isPending ? 'text-amber-600 dark:text-amber-400' : 'text-zinc-900 dark:text-white'}">${tx.amount.toLocaleString('tr-TR')} TL</span>
+          </div>
+        </div>
+      `).join('');
+
+      switchLayer('audit-tx');
+    }
+
+    // KURAL DEĞERLENDİRME MOTORU
+    function evaluateRuleEngine(tx, camp, card, cardKey) {
+      let result = {
+        isPending: false,
+        isSuccess: true,
+        reasons: [],
+        matchedRules: []
+      };
+
+      if (tx.isPending) {
+        result.isPending = true;
+        result.isSuccess = false;
+        result.reasons.push("İşlem henüz provizyonda beklemektedir ve kesinleşmemiştir.");
+        return result;
+      }
+
+      if (camp.requireOptIn && !camp.isJoined) {
+        result.isSuccess = false;
+        result.reasons.push("Kampanyaya önceden katılım sağlanmamıştır. Harcama öncesinde <b>'Kampanyaya Katıl'</b> butonu ile onay verilmelidir.");
+      } else if (camp.requireOptIn && camp.isJoined) {
+        result.matchedRules.push("Kampanya Katılım Onayı Doğrulandı");
+      }
+
+      if (!camp.validCards.includes(cardKey)) {
+        result.isSuccess = false;
+        result.reasons.push(`Kullandığınız <b>${card.name}</b> kartı bu kampanyanın geçerli kartları arasında yer almamaktadır.`);
+      } else {
+        result.matchedRules.push(`Geçerli Kart Eşleşmesi (${card.name})`);
+      }
+
+      if (tx.sector !== camp.sector || (camp.rules.allowedMCC && !camp.rules.allowedMCC.includes(tx.mcc))) {
+        result.isSuccess = false;
+        result.reasons.push(`Sektör/MCC Uyuşmazlığı: Harcamanız <b>${tx.sector} (MCC: ${tx.mcc})</b>, kampanya şartı <b>${camp.sector}</b> sektörüdür.`);
+      } else {
+        result.matchedRules.push(`MCC Sektör Kodu Onaylandı (${tx.mcc})`);
+      }
+
+      if (tx.amount < camp.minAmount) {
+        result.isSuccess = false;
+        result.reasons.push(`Tutar Yetersiz: Harcamanız <b>${tx.amount} TL</b>, kampanya alt limiti <b>${camp.minAmount} TL</b> tutarındadır.`);
+      } else {
+        result.matchedRules.push(`Alt Limit Koşulu Sağlandı (${tx.amount} TL >= ${camp.minAmount} TL)`);
+      }
+
+      if (camp.rules.channel !== 'ALL' && camp.rules.channel !== tx.channel) {
+        result.isSuccess = false;
+        result.reasons.push(`Kanal Uyuşmazlığı: Kampanya yalnızca <b>${camp.rules.channel}</b> harcamalarda geçerlidir.`);
+      } else {
+        result.matchedRules.push(`Ödeme Kanalı Uyumu (${tx.channel})`);
+      }
+
+      if (camp.rules.singlePaymentOnly && tx.isInstallment) {
+        result.isSuccess = false;
+        result.reasons.push(`Ödeme Şekli Uyuşmazlığı: Kampanya yalnızca <b>tek çekim</b> işlemlerde geçerlidir. Harcama taksitli yapılmıştır.`);
+      }
+
+      return result;
+    }
+
+    // 0.8 SN KURAL MOTORU ANALİZ SİMÜLASYONU VE RAPORLAMA
+    function selectAuditTransaction(txId) {
+      const card = FINANCIAL_DATA[auditState.cardKey];
+      auditState.transaction = card.txs.find(t => t.id === txId);
+
+      const camp = auditState.campaign;
+      const tx = auditState.transaction;
+      const cardKey = auditState.cardKey;
+
+      const displayBox = document.getElementById('audit-result-display-box');
+      const ticketBtn = document.getElementById('btn-submit-ticket');
+      const ticketDisclaimer = document.getElementById('ticket-disclaimer-text');
+
+      // 0.8 Saniye Yükleme Ekranı Gösterimi
+      switchLayer('audit-loading');
+
+      setTimeout(() => {
+        // 4. Senaryo Kontrolü
+        if (tx.rewardCredited) {
+          displayBox.className = "rounded-2xl p-4 mb-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-900 dark:text-emerald-200";
+          displayBox.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center mb-2.5">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            </div>
+            <h3 class="text-xs font-bold text-zinc-900 dark:text-white">Kazanım Kartınıza Yansıtılmıştır</h3>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-300 mt-1 leading-relaxed">
+              Seçtiğiniz <b>${tx.title}</b> harcamasına ait <b>${tx.rewardCreditNote || camp.reward}</b> tutarındaki ödül <b>${tx.rewardCreditDate}</b> tarihinde kartınıza başarıyla aktarılmıştır.
+            </p>
+            <div class="mt-2.5 p-2.5 rounded-lg bg-emerald-500/15 border border-emerald-500/25 text-[10px] text-emerald-800 dark:text-emerald-300 font-mono">
+              ✓ Kazanım durumu tamamlanmış olup ek bir inceleme talebi açmanıza gerek bulunmamaktadır.
+            </div>
+          `;
+          ticketBtn.style.display = "none";
+          ticketDisclaimer.style.display = "none";
+          switchLayer('audit-result');
+          lucide.createIcons();
+          return;
+        }
+
+        const analysis = evaluateRuleEngine(tx, camp, card, cardKey);
+
+        if (analysis.isPending) {
+          displayBox.className = "rounded-2xl p-4 mb-4 bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200";
+          displayBox.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-2.5">
+              <i data-lucide="clock" class="w-4 h-4"></i>
+            </div>
+            <h3 class="text-xs font-bold text-zinc-900 dark:text-white">İşlem Henüz Provizyonda (Beklemede)</h3>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-300 mt-1 leading-relaxed">
+              Seçtiğiniz <b>${tx.title}</b> harcaması henüz banka tarafından onaylanıp dönem içine yansımamıştır.
+            </p>
+            <div class="mt-2.5 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-800 dark:text-amber-300 leading-snug font-mono">
+              ⚠️ Kampanya kazanım sorgulamaları yalnızca <b>provizyondan düşmüş kesin hesap hareketleri</b> üzerinden yapılabilmektedir. Lütfen işlem onaylandıktan sonra tekrar sorgulama yapınız.
+            </div>
+          `;
+          ticketBtn.style.display = "none";
+          ticketDisclaimer.style.display = "none";
+        } else if (analysis.isSuccess) {
+          const matchedList = analysis.matchedRules.map(r => `<li class="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300 font-mono"><i data-lucide="check" class="w-3 h-3 text-emerald-500"></i> ${r}</li>`).join('');
+          displayBox.className = "rounded-2xl p-4 mb-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-900 dark:text-emerald-200";
+          displayBox.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center mb-2.5">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            </div>
+            <h3 class="text-xs font-bold text-zinc-900 dark:text-white">Kazanım Koşulları Tam Doğrulandı</h3>
+            <p class="text-[11px] text-zinc-600 dark:text-zinc-300 mt-1 leading-relaxed">Seçtiğiniz harcama kampanya kurallarına tamamen uygundur. Aşağıdaki doğrulanan parametrelerle inceleme talebi oluşturabilirsiniz:</p>
+            <ul class="mt-2.5 pt-2 border-t border-emerald-500/20 space-y-1">${matchedList}</ul>
+          `;
+          ticketBtn.style.display = "flex";
+          ticketDisclaimer.style.display = "block";
+        } else {
+          const listItems = analysis.reasons.map(r => `<li class="flex items-start gap-1.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed"><span class="text-rose-500 font-bold">•</span><span>${r}</span></li>`).join('');
+          displayBox.className = "rounded-2xl p-4 mb-4 bg-rose-500/10 border border-rose-500/20 text-rose-900 dark:text-rose-200";
+          displayBox.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-rose-600 text-white flex items-center justify-center mb-2.5">
+              <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+            </div>
+            <h3 class="text-xs font-bold text-zinc-900 dark:text-white">Kazanım Şartları Sağlanamadı</h3>
+            <ul class="mt-2 space-y-1">${listItems}</ul>
+          `;
+          ticketBtn.style.display = "none";
+          ticketDisclaimer.style.display = "none";
+        }
+
+        switchLayer('audit-result');
+        lucide.createIcons();
+      }, 800); // 0.8 saniye analiz gecikmesi
+    }
+
+    // İNCELEME TALEBİ GÖNDERME VE PROFİL LİSTESİNE EKLEME
+    function submitAuditTicket() {
+      const refCode = '#DY-' + Math.floor(1000 + Math.random() * 9000);
+      const camp = auditState.campaign;
+      const tx = auditState.transaction;
+
+      submittedTickets.unshift({
+        ref: refCode,
+        campTitle: camp ? camp.title : 'Kampanya İncelemesi',
+        txTitle: tx ? tx.title : 'Harcama Kaydı',
+        date: 'Bugün, ' + new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+        status: 'İnceleniyor (2 İş Günü)'
+      });
+
+      showToast(refCode);
+    }
+
+    function renderProfileTickets() {
+      const container = document.getElementById('profile-tickets-list');
+      const badgeCount = document.getElementById('ticket-badge-count');
+      badgeCount.innerText = `${submittedTickets.length} Talep`;
+
+      if (submittedTickets.length === 0) {
+        container.innerHTML = `<div class="text-[11px] text-zinc-400 italic p-1">Henüz iletilmiş bir inceleme talebiniz bulunmamaktadır.</div>`;
+        return;
+      }
+
+      container.innerHTML = submittedTickets.map(t => `
+        <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">${t.ref}</span>
+              <span class="text-[9px] font-mono bg-zinc-200 dark:bg-zinc-800 px-1.5 py-0.2 rounded text-zinc-600 dark:text-zinc-400">${t.date}</span>
+            </div>
+            <h5 class="text-xs font-semibold text-zinc-900 dark:text-white mt-0.5">${t.campTitle}</h5>
+            <span class="text-[10px] text-zinc-500 font-mono">${t.txTitle}</span>
+          </div>
+          <span class="text-[9px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded shrink-0">
+            ${t.status}
+          </span>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    // SİMÜLASYON VERİLERİNİ SIFIRLAMA FONKSİYONU
+    function resetSimulationData() {
+      submittedTickets = [];
+      CAMPAIGN_DATABASE.forEach(c => {
+        if (c.requireOptIn) c.isJoined = false;
+      });
+      renderProfileTickets();
+      showToast('SIFIRLANDI');
+      setTimeout(() => switchTab('home'), 500);
+    }
+
+    loadGeneralFeed();
+  </script>
+</body>
+</html>
