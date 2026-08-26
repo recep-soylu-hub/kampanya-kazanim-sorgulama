@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr" id="root-html" class="dark">
+<html lang="tr" id="root-html" class="dark h-full overflow-hidden">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -52,7 +52,6 @@
       transform: translateY(0);
     }
 
-    /* Toast Ortalanmış Konum ve Animasyon */
     #app-toast {
       transform: translateY(40px) scale(0.95);
       transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
@@ -62,20 +61,19 @@
       opacity: 1;
     }
 
-    /* Mobil Alt Bar Güvenli Alan Desteği */
     .safe-bottom {
-      padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px));
+      padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
     }
   </style>
 </head>
 
-<body class="bg-zinc-100 dark:bg-black text-zinc-900 dark:text-zinc-100 font-sans antialiased min-h-screen flex justify-center selection:bg-emerald-500 selection:text-black transition-colors duration-200">
+<body class="bg-zinc-100 dark:bg-black text-zinc-900 dark:text-zinc-100 font-sans antialiased h-full w-full overflow-hidden flex justify-center selection:bg-emerald-500 selection:text-black transition-colors duration-200 fixed inset-0">
 
-  <!-- Mobil Gövde (Telefonda Tam Oturan dvh Yapısı) -->
-  <main class="w-full max-w-md h-[100dvh] bg-white dark:bg-zinc-950 flex flex-col justify-between relative overflow-hidden border-x border-zinc-200 dark:border-zinc-900 shadow-2xl">
+  <!-- Mobil Gövde (Tam Ekran Kilidi) -->
+  <main class="w-full max-w-md h-full bg-white dark:bg-zinc-950 flex flex-col justify-between relative overflow-hidden border-x border-zinc-200 dark:border-zinc-900 shadow-2xl">
     
     <!-- Üst Bar -->
-    <header class="px-6 pt-7 pb-3.5 flex justify-between items-center bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-900 z-20 shrink-0">
+    <header class="px-6 pt-5 pb-3.5 flex justify-between items-center bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-900 z-20 shrink-0">
       <div class="flex items-center gap-3">
         <div class="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center border border-zinc-700/50 shadow-xs">
           <i data-lucide="badge-check" class="w-4 h-4 text-emerald-400"></i>
@@ -93,8 +91,8 @@
       </button>
     </header>
 
-    <!-- Dinamik Ekran Alanı (Kaydırılabilir İçerik) -->
-    <div class="flex-1 px-5 py-4 overflow-y-auto no-scrollbar z-10">
+    <!-- Dinamik Ekran Alanı (Kaydırılabilir Gövde) -->
+    <div class="flex-1 px-5 py-4 overflow-y-auto no-scrollbar z-10 min-h-0">
 
       <!-- ========================================================= -->
       <!-- 1. EKRAN: CÜZDAN & DOKUNMATİK KAYDIRILABİLİR KARTLAR -->
@@ -396,7 +394,7 @@
 
         <div id="audit-result-display-box" class="rounded-2xl p-5 mb-5 border"></div>
 
-        <div class="space-y-2">
+        <div class="space-y-2 pb-6">
           <div>
             <button id="btn-submit-ticket" onclick="submitAuditTicket()" class="w-full py-3.5 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-semibold text-xs tracking-wider uppercase flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all">
               <i data-lucide="send" class="w-3.5 h-3.5"></i> İnceleme Talebini İlet
@@ -543,8 +541,8 @@
       </button>
     </div>
 
-    <!-- Alt Navigasyon Barı (Mobil Çentik & Alt Bar Uyumlu - Asla Aşağıda Kalmaz) -->
-    <nav class="border-t border-zinc-200 dark:border-zinc-800 px-6 pt-2.5 safe-bottom bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md flex justify-between items-center z-30 shrink-0 shadow-lg">
+    <!-- Alt Navigasyon Barı (Mobil Ekrana Tam Sabitlenmiş) -->
+    <nav class="border-t border-zinc-200 dark:border-zinc-800 px-6 pt-2 safe-bottom bg-white dark:bg-zinc-950 flex justify-between items-center z-30 shrink-0 shadow-lg">
       <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
         <i data-lucide="wallet" class="w-4 h-4"></i>
         <span class="text-[9px]">Cüzdan</span>
